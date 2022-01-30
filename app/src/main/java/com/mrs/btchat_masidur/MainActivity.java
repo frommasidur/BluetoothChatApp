@@ -6,7 +6,6 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Handler;
 import android.os.Message;
 
@@ -16,7 +15,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -44,7 +42,9 @@ public class MainActivity extends AppCompatActivity {
     BluetoothDevice[] btArray;
 
     SendReceive sendReceive;
+//    static String TAG="MyBT_tag";
 
+    AffineCipher affineCipher;
     static final int STATE_LISTENING = 1;
     static final int STATE_CONNECTING=2;
     static final int STATE_CONNECTED=3;
@@ -61,21 +61,32 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        listen=(Button) findViewById(R.id.listen);
-        buttonBt = (Button) findViewById(R.id.buttonBT);
-        send=(Button) findViewById(R.id.send);
-        listView=(ListView) findViewById(R.id.listview);
-        msg_box =(TextView) findViewById(R.id.msg);
-        msgSendBox = (TextView) findViewById(R.id.textViewMsgSend);
-        status=(TextView) findViewById(R.id.status);
-        writeMsg=(EditText) findViewById(R.id.writemsg);
-        listDevices=(Button) findViewById(R.id.listDevices);
+        listen= findViewById(R.id.listen);
+        buttonBt = findViewById(R.id.buttonBT);
+        send= findViewById(R.id.send);
+        listView= findViewById(R.id.listview);
+        msg_box = findViewById(R.id.msg);
+        msgSendBox = findViewById(R.id.textViewMsgSend);
+        status= findViewById(R.id.status);
+        writeMsg= findViewById(R.id.writemsg);
+        listDevices= findViewById(R.id.listDevices);
 
         msg_box.setVisibility(View.GONE);
         send.setVisibility(View.GONE);
         writeMsg.setVisibility(View.GONE);
 
         bluetoothAdapter=BluetoothAdapter.getDefaultAdapter();
+
+//        String str = "Hello Test";
+//        String plainText = new String(str);
+//        char[] cipherText = affineCipher.encryption(str.toCharArray(),41,163);
+//        String toSend = new String(cipherText);
+//        Log.d(TAG, "Cipher text:"+cipherText.toString()+" "+toSend);
+//        char[] plainText1 = affineCipher.decryption(toSend.toCharArray(),25,93);
+//        String dt = new String(plainText1);
+//        Log.d(TAG, "Plain text:"+dt);
+//        String data = new String(cipherText);
+//        System.out.println("Plain text: "+plainText+"\nCipher Text: "+data);
 
         updateUIforBT(bluetoothAdapter.isEnabled());
         implementListeners();
@@ -171,8 +182,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 String string= String.valueOf(writeMsg.getText());
-                sendReceive.write(string.getBytes());
                 msgSendBox.setText(writeMsg.getText().toString());
+                //Encryption
+                char[] cipherText = affineCipher.encryption(string.toCharArray(),41,163);
+                String stringCipher = new String(cipherText);
+                sendReceive.write(stringCipher.getBytes());
                 writeMsg.setText(null);
             }
         });
@@ -220,7 +234,10 @@ public class MainActivity extends AppCompatActivity {
                 case STATE_MESSAGE_RECEIVED:
                     byte[] readBuff= (byte[]) msg.obj;
                     String tempMsg=new String(readBuff,0,msg.arg1);
-                    msg_box.setText(tempMsg);
+                    //Decryption
+                    char[] plainText = affineCipher.decryption(tempMsg.toCharArray(),25,93);
+                    String plainString = new String(plainText);
+                    msg_box.setText(plainString);
                     break;
             }
             return true;
