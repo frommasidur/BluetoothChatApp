@@ -42,9 +42,10 @@ public class MainActivity extends AppCompatActivity {
     BluetoothDevice[] btArray;
 
     SendReceive sendReceive;
-//    static String TAG="MyBT_tag";
+    static String TAG="MyBT_tag";
 
     AffineCipher affineCipher;
+    Sha sha;
     static final int STATE_LISTENING = 1;
     static final int STATE_CONNECTING=2;
     static final int STATE_CONNECTED=3;
@@ -76,6 +77,21 @@ public class MainActivity extends AppCompatActivity {
         writeMsg.setVisibility(View.GONE);
 
         bluetoothAdapter=BluetoothAdapter.getDefaultAdapter();
+
+//        String myStr = "Masidur";
+//        String mystrH = sha.getSha1Hash(myStr) + myStr; // Merge data with hash
+//        Log.d(TAG,mystrH);
+//        //send mystrH -> received
+//        String rh = mystrH.substring(0,40);     // Getting hash
+//        Log.d(TAG,rh);
+//        String rt = mystrH.substring(40);       // Getting data
+//        Log.d(TAG,rt);
+//        String h2 = sha.getSha1Hash(rt);
+//        Log.d(TAG,h2);
+//        if (rh.equals(h2))
+//            Log.d(TAG,"Accepted "+rh.length());
+//        else
+//            Log.d(TAG,"Not accepted");
 
 //        String str = "Hello Test";
 //        String plainText = new String(str);
@@ -186,7 +202,9 @@ public class MainActivity extends AppCompatActivity {
                 //Encryption
                 char[] cipherText = affineCipher.encryption(string.toCharArray(),41,163);
                 String stringCipher = new String(cipherText);
-                sendReceive.write(stringCipher.getBytes());
+                //Hashing
+                String data = sha.getSha1Hash(stringCipher) + stringCipher;
+                sendReceive.write(data.getBytes());
                 writeMsg.setText(null);
             }
         });
@@ -234,10 +252,17 @@ public class MainActivity extends AppCompatActivity {
                 case STATE_MESSAGE_RECEIVED:
                     byte[] readBuff= (byte[]) msg.obj;
                     String tempMsg=new String(readBuff,0,msg.arg1);
+                    //hashing here
+                    String h = tempMsg.substring(0,40);     //Extract the hash part
+                    String data = tempMsg.substring(40);    //Extract the data part
+                    if(h.equals(sha.getSha1Hash(data))){    //Comparing
+                        char[] plainText = affineCipher.decryption(data.toCharArray(),25,93);
+                        String plainString = new String(plainText);
+                        msg_box.setText(plainString);
+                    }else {
+                        msg_box.setText("Data broken !");
+                    }
                     //Decryption
-                    char[] plainText = affineCipher.decryption(tempMsg.toCharArray(),25,93);
-                    String plainString = new String(plainText);
-                    msg_box.setText(plainString);
                     break;
             }
             return true;
