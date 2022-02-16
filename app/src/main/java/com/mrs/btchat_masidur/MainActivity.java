@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.net.nsd.NsdManager;
 import android.os.Handler;
 import android.os.Message;
 
@@ -46,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
     AffineCipher affineCipher;
     Sha sha;
+    NsdManager.DiscoveryListener discoveryListener;
     static final int STATE_LISTENING = 1;
     static final int STATE_CONNECTING=2;
     static final int STATE_CONNECTED=3;
@@ -203,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
                 char[] cipherText = affineCipher.encryption(string.toCharArray(),41,163);
                 String stringCipher = new String(cipherText);
                 //Hashing
-                String data = sha.getSha1Hash(stringCipher) + stringCipher;
+                String data = sha.getSha1Hash(stringCipher) + stringCipher; //Combine the Hash and Data
                 sendReceive.write(data.getBytes());
                 writeMsg.setText(null);
             }
